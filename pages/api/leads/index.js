@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   // Handle GET requests to fetch leads
   if (req.method === 'GET') {
     try {
-      // Optional: Log a message when the Prisma Client successfully connects
+      // Log a message when the Prisma Client successfully connects
       await prisma.$connect();
       console.log('Prisma connected successfully!');
 
@@ -29,9 +29,11 @@ export default async function handler(req, res) {
       // Respond with the fetched leads
       res.status(200).json(leads);
     } catch (error) {
-      // Log the error if fetching leads fails
+      // Log detailed error information for debugging
       console.error('Error fetching leads:', error);
-      res.status(500).json({ error: 'Failed to fetch leads' });
+
+      // Respond with a detailed error message
+      res.status(500).json({ error: 'Failed to fetch leads', details: error.message });
     }
   } else {
     // Handle unsupported methods (anything other than GET)
