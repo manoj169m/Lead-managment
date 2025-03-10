@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { CommentSection } from './CommentSection'; // Import the CommentSection component
 
 // Main LeadTable Component
-export default function LeadTable({ leads }) {
+export default function LeadTable({ leads, setLeads }) {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [formData, setFormData] = useState({
@@ -14,6 +14,10 @@ export default function LeadTable({ leads }) {
     category: '',
     status: '',
   });
+
+  // State to manage the dialogue (edit and comment)
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState(''); // 'edit' or 'comment'
 
   // Handle Edit
   const handleEdit = (id) => {
@@ -25,7 +29,8 @@ export default function LeadTable({ leads }) {
       category: lead.category,
       status: lead.status,
     });
-    setIsEditing(true);
+    setDialogType('edit');
+    setIsDialogOpen(true);
   };
 
   // Handle Form Data Change
@@ -38,12 +43,63 @@ export default function LeadTable({ leads }) {
   };
 
   // Handle Form Submit (update lead)
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here, you would typically call an API to update the lead in the database
-    console.log('Updated Lead:', formData);
-    setIsEditing(false);
+  
+    const updatedLead = {
+      name: formData.name,
+      contactInfo: formData.contactInfo,
+      link: selectedLead.link,
+      instaLink: selectedLead.instaLink,
+      category: formData.category,
+      status: formData.status,
+    };
+  
+    try {
+      const response = await fetch(`/api/leads/${selectedLead.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedLead),
+      });
+  
+      if (response.ok) {
+        const updatedData = await response.json();
+        console.log('Updated Lead:', updatedData);
+
+        const updatedLeadsResponse = await fetch('/api/leads');
+        if (updatedLeadsResponse.ok) {
+          const updatedLeads = await updatedLeadsResponse.json();
+          setLeads(updatedLeads);
+        }
+
+        // Close the edit form and reset states
+        setIsDialogOpen(false);
+        setSelectedLead(null);
+        setFormData({
+          name: '',
+          contactInfo: '',
+          category: '',
+          status: '',
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to update lead:', errorData.error);
+      }
+    } catch (error) {
+      console.error('Error while updating lead:', error);
+    }
+  };
+
+  // Handle Cancel Edit or Close Comment Section
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
     setSelectedLead(null);
+    setFormData({
+      name: '',
+      contactInfo: '',
+      category: '',
+      status: '',
+    });
   };
 
   return (
@@ -56,7 +112,6 @@ export default function LeadTable({ leads }) {
             className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
           >
             <h3 className="text-xl font-semibold text-center mb-2">
-              {/* Check if lead.url exists before using it in the Link */}
               {lead.url ? (
                 <Link href={lead.link} className="text-blue-500">
                   {lead.name}
@@ -75,8 +130,9 @@ export default function LeadTable({ leads }) {
             </p>
             <p className="text-sm text-gray-500 mb-2">Category: {lead.category}</p>
             <p className="text-sm text-gray-500 mb-4">Status: {lead.status}</p>
+            <p className="text-sm text-gray-500 mb-4">Status: {lead.date}</p>
+            <p className="text-sm text-gray-500 mb-4"> <Link href={lead.instaLink} target='blank'>socialMedia Link</Link></p>
             <div className="flex justify-center space-x-4">
-              {/* Separate Edit and Add Comment buttons */}
               <button
                 onClick={() => handleEdit(lead.id)}
                 className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition"
@@ -85,7 +141,11 @@ export default function LeadTable({ leads }) {
               </button>
 
               <button
-                onClick={() => setSelectedLead(lead)}
+                onClick={() => {
+                  setSelectedLead(lead);
+                  setDialogType('comment');
+                  setIsDialogOpen(true);
+                }}
                 className="bg-green-500 text-white px-6 py-2 rounded-md hover:bg-green-600 transition"
               >
                 Add Comments
@@ -96,7 +156,7 @@ export default function LeadTable({ leads }) {
       </div>
 
       {/* Edit Form (visible only when editing) */}
-      {isEditing && selectedLead && (
+      {isDialogOpen && dialogType === 'edit' && selectedLead && (
         <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full sm:w-96 max-w-full">
             <h2 className="text-2xl font-semibold mb-6 text-center">Edit Lead</h2>
@@ -156,7 +216,14 @@ export default function LeadTable({ leads }) {
                 </select>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={handleCloseDialog}
+                  className="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition"
@@ -170,10 +237,9 @@ export default function LeadTable({ leads }) {
       )}
 
       {/* Comment Section (visible only when viewing comments for a lead) */}
-      {selectedLead && !isEditing && (
+      {isDialogOpen && dialogType === 'comment' && selectedLead && (
         <div className="mt-8">
-          <h3 className="text-lg font-semibold">Comments for {selectedLead.name}</h3>
-          <CommentSection leadId={selectedLead.id} />
+          <CommentSection leadId={selectedLead.id} onClose={handleCloseDialog} />
         </div>
       )}
     </div>

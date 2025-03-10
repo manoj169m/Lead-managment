@@ -1,23 +1,10 @@
-'use client';
+import Home from '@/components/Home'
+import React from 'react'
 
-
-import { useEffect, useState } from 'react';
-import LeadTable from '../components/LeadTable';
-
-export default function Home() {
-  const [leads, setLeads] = useState([]);
-
-  useEffect(() => {
-    fetch('/api/leads')
-      .then((res) => res.json())
-      .then((data) => setLeads(data));
-  }, []);
-
+export default function page() {
   return (
-    <div>
-      <h1>Leads</h1>
-      
-      <LeadTable leads={leads} />
-    </div>
-  );
+    <>
+      <Home/>
+    </>
+  )
 }

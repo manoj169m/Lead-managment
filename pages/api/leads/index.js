@@ -1,43 +1,69 @@
 import { PrismaClient } from '@prisma/client';
 
-// Use a singleton pattern to initialize Prisma Client
+// PrismaClient is attached to the `global` object in development to prevent
+// exhausting your database connection limit.
+// Learn more: https://pris.ly/d/help/next-js-best-practices
+
+// For JavaScript, we can just use global directly
 const prisma = global.prisma || new PrismaClient();
+
+// Only assign to global object in development to avoid memory leaks in production
 if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
 
 export default async function handler(req, res) {
-  // Log the request method and body for debugging
+  // Log the request method
   console.log('Request Method:', req.method);
-  console.log('Request Body:', req.body);
-
-  // Set CORS headers to allow requests from all origins (you can restrict this to a specific domain)
-  res.setHeader('Access-Control-Allow-Origin', '*'); // You can replace '*' with your frontend domain (e.g., 'https://your-frontend.com')
+  
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle OPTIONS requests (preflight requests from browsers)
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
   // Handle GET requests to fetch leads
   if (req.method === 'GET') {
     try {
-      // Log a message when the Prisma Client successfully connects
-      await prisma.$connect();
-      console.log('Prisma connected successfully!');
-
-      // Fetch the leads from the database
+      console.log('Attempting to fetch leads...');
+      
+      // Fetch the leads from the database - Prisma automatically connects
       const leads = await prisma.lead.findMany({
         include: { comments: true },
       });
 
+      console.log(`Successfully fetched ${leads.length} leads`);
+      
       // Respond with the fetched leads
       res.status(200).json(leads);
     } catch (error) {
-      // Log detailed error information for debugging
-      console.error('Error fetching leads:', error);
+      // Safely log errors
+      console.error('Error fetching leads:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error details:', error);
+
+      // Safely extract error message
+      let errorMessage = 'Unknown error occurred';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error !== null && typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
 
       // Respond with a detailed error message
-      res.status(500).json({ error: 'Failed to fetch leads', details: error.message });
+      res.status(500).json({ 
+        error: 'Failed to fetch leads', 
+        details: errorMessage 
+      });
     }
   } else {
-    // Handle unsupported methods (anything other than GET)
+    // Handle unsupported methods
     res.setHeader('Allow', ['GET']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
   }
 }
