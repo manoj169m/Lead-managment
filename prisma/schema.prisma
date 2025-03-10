@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Lead Model
+model Lead {
+  id          Int         @id @default(autoincrement())
+  name        String      // Lead name
+  contactInfo String      // Contact information (e.g., email, phone)
+  link        String?     // Optional link related to the lead
+  instaLink   String?     // Optional Instagram link
+  date        DateTime    @default(now()) // Date when the lead was added
+  category    String      // Category of the lead (e.g., "Hot", "Cold", "Warm")
+  status      LeadStatus  // Status of the lead (e.g., "Mailed", "Follow-up", "Not Worked")
+  createdAt   DateTime    @default(now()) // Timestamp when the lead was created
+  updatedAt   DateTime    @updatedAt // Timestamp when the lead was last updated
+  comments    Comment[]   // One-to-many relationship with Comment model
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String   // The comment text
+  createdAt DateTime @default(now()) // Timestamp when the comment was created
+  leadId    Int      // Foreign key to associate the comment with a lead
+  lead      Lead     @relation(fields: [leadId], references: [id]) // Relation to Lead
+}
+
+enum LeadStatus {
+  Mailed       // Lead has been mailed
+  FollowUp     // Follow-up required
+  NotWorked    // Lead did not work out
+  New          // New lead (default status)
+}
