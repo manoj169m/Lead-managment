@@ -131,7 +131,7 @@ export default function LeadTable({ leads, setLeads }) {
             <p className="text-sm text-gray-500 mb-2">Category: {lead.category}</p>
             <p className="text-sm text-gray-500 mb-4">Status: {lead.status}</p>
             <p className="text-sm text-gray-500 mb-4">Status: {lead.date}</p>
-            <p className="text-sm text-gray-500 mb-4"> <Link href={lead.instaLink} target='blank'>socialMedia Link</Link></p>
+            <p className="text-sm text-gray-500 mb-4"> <Link href={lead.instaLink} target='blank'>socialMedia Links</Link></p>
             <div className="flex justify-center space-x-4">
               <button
                 onClick={() => handleEdit(lead.id)}
