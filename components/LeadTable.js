@@ -1,5 +1,7 @@
+'use client'
+
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CommentSection } from './CommentSection'; // Import the CommentSection component
 
 // Main LeadTable Component
