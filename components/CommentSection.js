@@ -14,7 +14,7 @@ export function CommentSection({ leadId }) {
     };
   
     const handleAddComment = async () => {
-      const response = await fetch('/api/comments/create', {
+      const response = await fetch('/api/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newComment, leadId }),
