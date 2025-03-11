@@ -22,7 +22,7 @@ export default function Home() {
 
   return (
     <div>
-      <h1>Leads</h1>
+      <h1>Total Leads {leads.length}</h1>
 
       {/* Display loading animation when data is being fetched */}
       {isLoading ? (

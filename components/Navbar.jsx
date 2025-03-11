@@ -27,6 +27,14 @@ export default function Navbar() {
               Add Lead
             </a>
           </li>
+          <li>
+            <a 
+              href="/status" 
+              className="text-white hover:text-blue-200 transition-colors"
+            >
+                Status
+            </a>
+          </li>
         </ul>
       </div>
     </nav>
